@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة التحليل الفائق ومؤشرات الذكاء الاصطناعي - ICT/SMC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
+        * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
+        body {
+            background-color: #0b0e14;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #374151; }
+        .glow-green { box-shadow: 0 0 15px rgba(16, 185, 129, 0.25); }
+        .glow-red { box-shadow: 0 0 15px rgba(239, 68, 68, 0.25); }
+        .glow-blue { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .active-pair {
+            border-color: #3b82f6;
+            background-color: rgba(59, 130, 246, 0.15);
+        }
+        .pulse-badge { animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+    <header class="border-b border-gray-800 bg-gray-900/80 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <div class="p-2 bg-blue-600/20 text-blue-400 rounded-xl border border-blue-500/30">
+                    <i data-lucide="cpu" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white flex items-center gap-2">
+                        المحلل الذكي الخارق <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">ICT / SMC AI</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">تحليل حقيقي متطابق مع TradingView 100%</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4 space-x-reverse bg-gray-800/60 px-3 py-1.5 rounded-lg border border-gray-700/50">
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <i data-lucide="clock" class="w-4 h-4 text-blue-400"></i>
+                    <span class="text-xs text-gray-400">توقيت السوق العالمي (UTC):</span>
+                    <span id="utcClock" class="font-mono text-sm font-bold text-blue-400">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="bg-gray-900/40 border-b border-gray-800/80 px-4 py-2 overflow-x-auto">
+        <div class="max-w-7xl mx-auto flex items-center space-x-2 space-x-reverse">
+            <span class="text-xs font-semibold text-gray-400 ml-2 whitespace-nowrap flex items-center gap-1">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i> اختيار الزوج:
+            </span>
+            <button onclick="changeSymbol(event,'FX:EURUSD')" class="pair-btn active-pair px-3 py-1.5 rounded-lg border border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-white">
+                <span>EUR/USD</span>
+            </button>
+            <button onclick="changeSymbol(event,'FX:GBPUSD')" class="pair-btn px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300">
+                <span>GBP/USD</span>
+            </button>
+            <button onclick="changeSymbol(event,'OANDA:XAUUSD')" class="pair-btn px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-yellow-400">
+                <i data-lucide="coins" class="w-3.5 h-3.5"></i> <span>GOLD (XAU/USD)</span>
+            </button>
+            <button onclick="changeSymbol(event,'FX:USDJPY')" class="pair-btn px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300">
+                <span>USD/JPY</span>
+            </button>
+            <button onclick="changeSymbol(event,'BITSTAMP:BTCUSD')" class="pair-btn px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-orange-400">
+                <span>BTC/USD</span>
+            </button>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 py-4 w-full grid grid-cols-1 lg:grid-cols-12 gap-4 flex-grow">
+        <div class="lg:col-span-8 flex flex-col bg-gray-900/60 border border-gray-800 rounded-2xl p-2 h-[550px] lg:h-auto min-h-[450px]">
+            <div class="flex justify-between items-center px-3 py-2 border-b border-gray-800/60 mb-2">
+                <div class="flex items-center space-x-2 space-x-reverse">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="chartSymbolName" class="text-sm font-bold text-gray-200">EUR/USD - شارت حقيقي مباشر</span>
+                </div>
+                <div class="text-xs text-gray-400 flex items-center gap-1">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-blue-400"></i> خوادم TradingView الرسمية
+                </div>
+            </div>
+            <div class="w-full flex-grow rounded-xl overflow-hidden" id="tv_chart_container"></div>
+        </div>
+
+        <div class="lg:col-span-4 flex flex-col space-y-4">
+            <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 glow-blue flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i> توصية الذكاء الاصطناعي
+                        </span>
+                        <span id="aiConfidence" class="text-xs font-extrabold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> دقة 94% (عالية جداً)
+                        </span>
+                    </div>
+
+                    <div id="signalBadgeContainer" class="mb-4">
+                        <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex justify-between items-center glow-green">
+                            <div class="flex items-center space-x-3 space-x-reverse">
+                                <div class="p-2 rounded-lg bg-emerald-500 text-black font-extrabold text-sm">BUY</div>
+                                <div>
+                                    <h2 class="text-base font-bold text-white">صفقة شراء قوية (Long)</h2>
+                                    <p class="text-xs text-emerald-400 font-medium">سحب سيولة + Order Block في الكيل زون</p>
+                                </div>
+                            </div>
+                            <i data-lucide="trending-up" class="w-8 h-8 text-emerald-400 opacity-80"></i>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5 text-xs bg-gray-950/60 p-3 rounded-xl border border-gray-800/80 mb-4">... (truncated)

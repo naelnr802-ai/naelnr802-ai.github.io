@@ -271,7 +271,7 @@
       }, 10000);
     }
 
-    // Improved sync with fallback and retries
+    // Improved sync with fallback and retries + CORS proxy fallback for metals.live
     async function syncMarketPrice(){
       const btn = document.getElementById('syncBtn');
       const original = btn ? btn.innerHTML : '';
@@ -287,12 +287,10 @@
             'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'
           ];
           result = await fetchWithRetry(urls, 2);
-          // parse
           let live = null;
           if(result.source.includes('coingecko')){
             live = result.data.bitcoin && result.data.bitcoin.usd ? Number(result.data.bitcoin.usd) : null;
           } else if(result.source.includes('binance')){
-            // BTCUSDT -> treat as USD approximation
             live = result.data && result.data.price ? Number(result.data.price) : null;
           }
           if(!live) throw new Error('لم يستخرج سعر BTC من المصدر');
@@ -302,21 +300,29 @@
         }
 
         if(currentSymbol.includes('XAU')){
-          // metals.live primary, exchangerate.host fallback
+          // Try proxy -> metals.live -> exchangerate.host
           const urls = [
+            'https://api.allorigins.win/raw?url=https://api.metals.live/v1/spot',
             'https://api.metals.live/v1/spot',
             'https://api.exchangerate.host/convert?from=XAU&to=USD'
           ];
           result = await fetchWithRetry(urls, 2);
           let live = null;
           if(result.source.includes('metals.live')){
-            // result.data is array
             const arr = result.data;
             const xau = arr.find(item => item && (item.symbol === 'XAU' || (item.code && item.code === 'XAU'))) || arr.find(item=> item && item.symbol && item.symbol.toLowerCase && item.symbol.toLowerCase().includes('xau'));
             if(xau && xau.price) live = Number(xau.price);
+          } else if(result.source.includes('allorigins.win')){
+            // allorigins returns raw body from metals.live - parse as array
+            try{
+              const arr = result.data;
+              const xau = Array.isArray(arr) ? arr.find(item => item && (item.symbol === 'XAU' || (item.code && item.code === 'XAU'))) : null;
+              if(xau && xau.price) live = Number(xau.price);
+            }catch(e){ /* ignore */ }
           } else if(result.source.includes('exchangerate.host')){
             live = result.data && typeof result.data.result === 'number' ? Number(result.data.result) : null;
           }
+
           if(!live) throw new Error('لم يستخرج سعر XAU من المصدر');
           basePrices[currentSymbol] = live;
           const now = new Date();
@@ -329,7 +335,7 @@
 
       } catch(e){
         console.error('syncMarketPrice error', e);
-        setSyncStatus('فشل المزامنة — إعادة المحاولة خلال 3s', true);
+        setSyncStatus('فشل المزامنة — إعادة المحاولة خلال 3s (تفاصيل في Console)', true);
         if(btn){ btn.disabled = false; btn.innerHTML = original; lucide.createIcons(); }
         // retry once after 3s
         setTimeout(()=>{ if(navigator.onLine) syncMarketPrice(); }, 3000);

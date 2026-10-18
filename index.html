@@ -9,11 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap');
         * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
-        body {
-            background-color: #0b0e14;
-            color: #e2e8f0;
-            overflow-x: hidden;
-        }
+        body { background-color: #0b0e14; color: #e2e8f0; overflow-x: hidden; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #111827; }
         ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
@@ -56,20 +52,11 @@
             <span class="text-xs font-semibold text-gray-400 ml-2 whitespace-nowrap flex items-center gap-1">
                 <i data-lucide="layers" class="w-3.5 h-3.5"></i> اختيار الزوج:
             </span>
-            <button onclick="changeSymbol(event,'FX:EURUSD')" class="pair-btn active-pair px-3 py-1.5 rounded-lg border border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-white">
-                <span>EUR/USD</span>
-            </button>
-            <button onclick="changeSymbol(event,'FX:GBPUSD')" class="pair-btn px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300">
-                <span>GBP/USD</span>
-            </button>
-            <button onclick="changeSymbol(event,'OANDA:XAUUSD')" class="pair-btn px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-yellow-400">
-                <i data-lucide="coins" class="w-3.5 h-3.5"></i> <span>GOLD (XAU/USD)</span>
-            </button>
-            <button onclick="changeSymbol(event,'FX:USDJPY')" class="pair-btn px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-gray-300">
-                <span>USD/JPY</span>
-            </button>
             <button onclick="changeSymbol(event,'BITSTAMP:BTCUSD')" class="pair-btn px-3 py-1.5 rounded-lg border border-gray-800 hover:border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-orange-400">
                 <span>BTC/USD</span>
+            </button>
+            <button onclick="changeSymbol(event,'OANDA:XAUUSD')" class="pair-btn active-pair px-3 py-1.5 rounded-lg border border-gray-700 text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap text-yellow-400">
+                <i data-lucide="coins" class="w-3.5 h-3.5"></i> <span>GOLD (XAU/USD)</span>
             </button>
         </div>
     </div>
@@ -79,10 +66,10 @@
             <div class="flex justify-between items-center px-3 py-2 border-b border-gray-800/60 mb-2">
                 <div class="flex items-center space-x-2 space-x-reverse">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span id="chartSymbolName" class="text-sm font-bold text-gray-200">EUR/USD - شارت حقيقي مباشر</span>
+                    <span id="chartSymbolName" class="text-sm font-bold text-gray-200">BTC/USD - شارت حقيقي مباشر</span>
                 </div>
                 <div class="text-xs text-gray-400 flex items-center gap-1">
-                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-blue-400"></i> خوادم TradingView الرسمية
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-blue-400"></i> خوادم TradingView
                 </div>
             </div>
             <div class="w-full flex-grow rounded-xl overflow-hidden" id="tv_chart_container"></div>
@@ -116,23 +103,23 @@
                     <div class="space-y-2.5 text-xs bg-gray-950/60 p-3 rounded-xl border border-gray-800/80 mb-4">
                         <div class="flex justify-between items-center pb-1.5 border-b border-gray-800/60">
                             <span class="text-gray-400 flex items-center gap-1"><i data-lucide="log-in" class="w-3.5 h-3.5 text-blue-400"></i> نقطة الدخول (Entry):</span>
-                            <span id="entryPrice" class="font-mono font-bold text-white text-sm">1.08450</span>
+                            <span id="entryPrice" class="font-mono font-bold text-white text-sm">—</span>
                         </div>
                         <div class="flex justify-between items-center pb-1.5 border-b border-gray-800/60">
                             <span class="text-gray-400 flex items-center gap-1"><i data-lucide="shield-alert" class="w-3.5 h-3.5 text-red-400"></i> وقف الخسارة (SL):</span>
-                            <span id="slPrice" class="font-mono font-bold text-red-400 text-sm">1.08310</span>
+                            <span id="slPrice" class="font-mono font-bold text-red-400 text-sm">—</span>
                         </div>
                         <div class="flex justify-between items-center pb-1.5 border-b border-gray-800/60">
                             <span class="text-gray-400 flex items-center gap-1"><i data-lucide="target" class="w-3.5 h-3.5 text-emerald-400"></i> الهدف الأول (TP1):</span>
-                            <span id="tp1Price" class="font-mono font-bold text-emerald-400 text-sm">1.08730</span>
+                            <span id="tp1Price" class="font-mono font-bold text-emerald-400 text-sm">—</span>
                         </div>
-                        <div class="flex justify-between items-center pb-1.5 border-b border-gray-800/60">
+                        <div class="flex justify-between items-center pb-1.5 border border-gray-800/60">
                             <span class="text-gray-400 flex items-center gap-1"><i data-lucide="target" class="w-3.5 h-3.5 text-emerald-400"></i> الهدف الثاني (TP2):</span>
-                            <span id="tp2Price" class="font-mono font-bold text-emerald-400 text-sm">1.08980</span>
+                            <span id="tp2Price" class="font-mono font-bold text-emerald-400 text-sm">—</span>
                         </div>
-                        <div class="flex justify-between items-center">
+                        <div class="flex justify-between items-center mt-2">
                             <span class="text-gray-400 flex items-center gap-1"><i data-lucide="trophy" class="w-3.5 h-3.5 text-yellow-400"></i> الهدف النهائي (TP3):</span>
-                            <span id="tp3Price" class="font-mono font-bold text-yellow-400 text-sm">1.09250</span>
+                            <span id="tp3Price" class="font-mono font-bold text-yellow-400 text-sm">—</span>
                         </div>
                     </div>
 
@@ -170,7 +157,7 @@
                 </div>
                 <div class="mt-3 p-2 bg-gray-950/80 rounded-lg border border-gray-800/80 flex justify-between items-center text-xs">
                     <span class="text-gray-400">حجم اللوت الموصى به:</span>
-                    <span id="calculatedLot" class="font-mono font-bold text-blue-400 text-sm">0.07 Lot</span>
+                    <span id="calculatedLot" class="font-mono font-bold text-blue-400 text-sm">0.01 Lot</span>
                 </div>
             </div>
         </div>
@@ -194,13 +181,12 @@
     <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <script>
         lucide.createIcons();
-        let currentSymbol = 'FX:EURUSD';
+        // Default to BTC as user prioritized BTC and XAU
+        let currentSymbol = 'BITSTAMP:BTCUSD';
+        let autoSyncInterval = null;
         let basePrices = {
-            'FX:EURUSD': 1.0850,
-            'FX:GBPUSD': 1.2640,
-            'OANDA:XAUUSD': 2735.00,
-            'FX:USDJPY': 152.30,
-            'BITSTAMP:BTCUSD': 68500.00
+            'BITSTAMP:BTCUSD': null,
+            'OANDA:XAUUSD': null
         };
 
         function loadTradingViewWidget(symbol) {
@@ -235,107 +221,81 @@
             document.getElementById('chartSymbolName').innerText = `${name} - شارت حقيقي مباشر`;
             loadTradingViewWidget(symbol);
             reanalyzeMarket();
-        }
-
-        function updateClockAndKillZones() {
-            const now = new Date();
-            const utcHours = now.getUTCHours();
-            const utcMinutes = now.getUTCMinutes();
-            const utcSeconds = now.getUTCSeconds();
-            const timeString = `${String(utcHours).padStart(2, '0')}:${String(utcMinutes).padStart(2, '0')}:${String(utcSeconds).padStart(2, '0')}`;
-            document.getElementById('utcClock').innerText = timeString;
-            const currentDecimalTime = utcHours + (utcMinutes / 60);
-            resetZoneBadge('asianZone', 'آسيا: 00:00 - 04:00 UTC');
-            resetZoneBadge('londonZone', 'لندن: 07:00 - 10:00 UTC');
-            resetZoneBadge('nyZone', 'نيويورك: 12:00 - 15:00 UTC');
-            resetZoneBadge('londonCloseZone', 'إغلاق لندن: 15:00 - 17:00 UTC');
-            if (currentDecimalTime >= 0 && currentDecimalTime < 4) {
-                activateZoneBadge('asianZone', 'آسيا نشط الآن 🔥');
-            } else if (currentDecimalTime >= 7 && currentDecimalTime < 10) {
-                activateZoneBadge('londonZone', 'لندن نشط الآن (فوليوم مرتفع) 🔥');
-            } else if (currentDecimalTime >= 12 && currentDecimalTime < 15) {
-                activateZoneBadge('nyZone', 'نيويورك نشط الآن (فوليوم أقصى) 🔥');
-            } else if (currentDecimalTime >= 15 && currentDecimalTime < 17) {
-                activateZoneBadge('londonCloseZone', 'إغلاق لندن نشط (سيولة مؤسسات) 🔥');
+            // start/stop auto-sync depending on symbol
+            if (symbol.includes('BTC') || symbol.includes('XAU')) {
+                startAutoSync();
+                // immediate sync
+                syncMarketPrice();
+            } else {
+                stopAutoSync();
             }
         }
 
-        function activateZoneBadge(id, text) {
-            const el = document.getElementById(id);
-            el.className = 'px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-bold pulse-badge';
-            el.innerText = text;
+        function startAutoSync() {
+            stopAutoSync();
+            autoSyncInterval = setInterval(()=>{
+                if (currentSymbol.includes('BTC') || currentSymbol.includes('XAU')) {
+                    syncMarketPrice();
+                }
+            }, 10000); // every 10 seconds
+        }
+        function stopAutoSync() {
+            if (autoSyncInterval) { clearInterval(autoSyncInterval); autoSyncInterval = null; }
         }
 
-        function resetZoneBadge(id, defaultText) {
-            const el = document.getElementById(id);
-            el.className = 'px-2.5 py-1 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-medium';
-            el.innerText = defaultText;
-        }
-
-        // Synchronize market price from public APIs and re-run analysis
         async function syncMarketPrice() {
             const btn = document.getElementById('syncBtn');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> مزامنة...';
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> مزامنة...'; }
             try {
                 const symbolKey = currentSymbol;
                 let livePrice = null;
 
-                // FX pairs: use exchangerate.host
-                if (symbolKey === 'FX:EURUSD' || symbolKey === 'FX:GBPUSD' || symbolKey === 'FX:USDJPY') {
-                    const parts = symbolKey.split(':')[1];
-                    // e.g., EURUSD -> EUR, USD
-                    let from = parts.slice(0,3);
-                    let to = parts.slice(3);
-                    // Special-case USDJPY ordering
-                    if(parts.length === 6){ from = parts.slice(0,3); to = parts.slice(3); }
-                    const api = `https://api.exchangerate.host/convert?from=${from}&to=${to}`;
-                    const res = await fetch(api);
-                    const data = await res.json();
-                    if (data && typeof data.result === 'number') livePrice = data.result;
-                }
-
-                // BTC: use CoinGecko
                 if (symbolKey.includes('BTC')) {
+                    // CoinGecko
                     const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
                     const d = await res.json();
                     if (d && d.bitcoin && d.bitcoin.usd) livePrice = parseFloat(d.bitcoin.usd);
                 }
 
-                // XAU: try exchangerate.host (may work if supported), otherwise skip
                 if (symbolKey.includes('XAU')) {
-                    try{
-                        const res = await fetch('https://api.exchangerate.host/convert?from=XAU&to=USD');
-                        const j = await res.json();
-                        if (j && typeof j.result === 'number') livePrice = j.result;
-                    } catch(e){ /* ignore */ }
+                    // metals.live provides free endpoint for XAU to USD
+                    try {
+                        const res = await fetch('https://api.metals.live/v1/spot');
+                        const arr = await res.json();
+                        // arr is array of objects like [{symbol:'XAU', price:...}, {symbol:'XAG', price:...}, ...]
+                        const xau = arr.find(i=>i && (i.symbol === 'XAU' || i.code === 'XAU')) || arr.find(i=>i.symbol && i.symbol.toLowerCase().includes('xau'));
+                        if (xau && xau.price) livePrice = parseFloat(xau.price);
+                    } catch(e){
+                        // fallback to exchangerate.host if metals.live fails
+                        try {
+                            const res = await fetch('https://api.exchangerate.host/convert?from=XAU&to=USD');
+                            const j = await res.json();
+                            if (j && typeof j.result === 'number') livePrice = j.result;
+                        } catch(e2){ /* ignore */ }
+                    }
                 }
 
                 if (!livePrice || isNaN(livePrice)) {
-                    alert('لم أتمكن من جلب السعر الحي لهذا الزوج عبر الـ APIs العامة. يُرجى المحاولة مرة أخرى أو اختيار زوج آخر.');
-                } else {
-                    // Update base price and reanalyze
-                    basePrices[currentSymbol] = livePrice;
-                    reanalyzeMarket(true); // pass flag to indicate live base used
-                    // small feedback
-                    btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> تم التزامن';
-                    setTimeout(()=>{ btn.innerHTML = originalText; }, 2000);
+                    console.warn('لم أتمكن من جلب السعر الحي لهذ�� الزوج عبر الـ APIs العامة.');
+                    return;
                 }
+
+                basePrices[currentSymbol] = livePrice;
+                reanalyzeMarket(true);
+                if (btn) { btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> تم التزامن'; }
+                setTimeout(()=>{ if (btn) btn.innerHTML = originalText; }, 1500);
+
             } catch (e) {
                 console.error('sync error', e);
-                alert('حدث خطأ أثناء مزامنة السعر. افتح Console لمزيد من التفاصيل.');
             } finally {
-                btn.disabled = false;
-                lucide.createIcons();
+                if (btn) { btn.disabled = false; lucide.createIcons(); }
             }
         }
 
-        // Mock Dynamic AI Signal Engine
-        // if useLiveBase true -> mark aiConfidence lower since based on live price
         function reanalyzeMarket(useLiveBase){
             const isBuy = Math.random() > 0.4;
-            const base = basePrices[currentSymbol] || 1.0850;
+            const base = basePrices[currentSymbol] || (currentSymbol.includes('BTC') ? 68500 : 2735);
             const step = base * 0.002;
             let entry, sl, tp1, tp2, tp3;
 
@@ -354,11 +314,11 @@
             }
 
             const decimals = (currentSymbol.includes('XAU') || currentSymbol.includes('BTC')) ? 2 : (currentSymbol.includes('JPY') ? 3 : 5);
-            document.getElementById('entryPrice').innerText = entry.toFixed(decimals);
-            document.getElementById('slPrice').innerText = sl.toFixed(decimals);
-            document.getElementById('tp1Price').innerText = tp1.toFixed(decimals);
-            document.getElementById('tp2Price').innerText = tp2.toFixed(decimals);
-            document.getElementById('tp3Price').innerText = tp3.toFixed(decimals);
+            document.getElementById('entryPrice').innerText = entry ? entry.toFixed(decimals) : '—';
+            document.getElementById('slPrice').innerText = sl ? sl.toFixed(decimals) : '—';
+            document.getElementById('tp1Price').innerText = tp1 ? tp1.toFixed(decimals) : '—';
+            document.getElementById('tp2Price').innerText = tp2 ? tp2.toFixed(decimals) : '—';
+            document.getElementById('tp3Price').innerText = tp3 ? tp3.toFixed(decimals) : '—';
 
             const badgeContainer = document.getElementById('signalBadgeContainer');
             if (isBuy) {
@@ -389,7 +349,6 @@
                 `;
             }
 
-            // If synchronized with live price, show note and slightly lower confidence
             const confEl = document.getElementById('aiConfidence');
             if(useLiveBase){
                 confEl.innerHTML = '<i data-lucide="shield-check" class="w-3.5 h-3.5"></i> متزامن مع السوق (حقيقي)';
@@ -416,8 +375,29 @@
 
         window.onload = function() {
             loadTradingViewWidget(currentSymbol);
-            setInterval(updateClockAndKillZones, 1000);
-            updateClockAndKillZones();
+            // start auto-sync for BTC/XAU
+            if (currentSymbol.includes('BTC') || currentSymbol.includes('XAU')) { startAutoSync(); syncMarketPrice(); }
+            setInterval(()=>{
+                const now = new Date();
+                const utcHours = now.getUTCHours();
+                const utcMinutes = now.getUTCMinutes();
+                const utcSeconds = now.getUTCSeconds();
+                const timeString = `${String(utcHours).padStart(2,'0')}:${String(utcMinutes).padStart(2,'0')}:${String(utcSeconds).padStart(2,'0')}`;
+                document.getElementById('utcClock').innerText = timeString;
+                const currentDecimalTime = utcHours + (utcMinutes / 60);
+                // zones
+                const zones = [
+                    ['asianZone','آسيا: 00:00 - 04:00 UTC',0,4],
+                    ['londonZone','لندن: 07:00 - 10:00 UTC',7,10],
+                    ['nyZone','نيويورك: 12:00 - 15:00 UTC',12,15],
+                    ['londonCloseZone','إغلاق لندن: 15:00 - 17:00 UTC',15,17]
+                ];
+                zones.forEach(z=>{ const el=document.getElementById(z[0]); el.className='px-2.5 py-1 rounded-lg bg-gray-800 border border-gray-700 text-gray-400 font-medium'; el.innerText=z[1]; });
+                if (currentDecimalTime>=0 && currentDecimalTime<4) document.getElementById('asianZone').className='px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-bold pulse-badge', document.getElementById('asianZone').innerText='آسيا نشط الآن 🔥';
+                else if (currentDecimalTime>=7 && currentDecimalTime<10) document.getElementById('londonZone').className='px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-bold pulse-badge', document.getElementById('londonZone').innerText='لندن نشط الآن (فوليوم مرتفع) 🔥';
+                else if (currentDecimalTime>=12 && currentDecimalTime<15) document.getElementById('nyZone').className='px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-bold pulse-badge', document.getElementById('nyZone').innerText='نيويورك نشط الآن (فوليوم أقصى) 🔥';
+                else if (currentDecimalTime>=15 && currentDecimalTime<17) document.getElementById('londonCloseZone').className='px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500 text-emerald-400 font-bold pulse-badge', document.getElementById('londonCloseZone').innerText='إغلاق لندن نشط (سيولة مؤسسات) 🔥';
+            },1000);
             calculateLot();
         };
     </script>

@@ -30,6 +30,8 @@
       50% { transform: scale(0.98); opacity: 0.7; }
       100% { transform: scale(1); opacity: 1; }
     }
+    .sync-small { font-size: 11px; color: #93c5fd; }
+    .sync-error { color: #f87171; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -139,13 +141,16 @@
           </ul>
         </div>
 
-        <div class="mt-4 flex gap-2">
-          <button id="syncBtn" onclick="syncMarketPrice()" class="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-[11px] flex items-center justify-center gap-2">
-            <i data-lucide="download-cloud" class="w-4 h-4"></i> مزامنة
-          </button>
-          <button onclick="reanalyzeMarket()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] flex items-center justify-center gap-2">
-            <i data-lucide="refresh-cw" class="w-4 h-4"></i> تحليل
-          </button>
+        <div class="mt-4 flex flex-col gap-2">
+          <div class="flex gap-2">
+            <button id="syncBtn" onclick="syncMarketPrice()" class="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-[11px] flex items-center justify-center gap-2">
+              <i data-lucide="download-cloud" class="w-4 h-4"></i> مزامنة
+            </button>
+            <button onclick="reanalyzeMarket()" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] flex items-center justify-center gap-2">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i> تحليل
+            </button>
+          </div>
+          <div id="syncStatus" class="sync-small">آخر تحديث: — | حالة: غير متزامن</div>
         </div>
       </div>
 
@@ -189,9 +194,41 @@
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <script>
     lucide.createIcons();
-    let currentSymbol = 'BITSTAMP:BTCUSD';
+    let currentSymbol = 'OANDA:XAUUSD';
     let autoSyncInterval = null;
     let basePrices = { 'BITSTAMP:BTCUSD': null, 'OANDA:XAUUSD': null };
+
+    // Helper: update sync status UI
+    function setSyncStatus(text, isError=false){
+      const el = document.getElementById('syncStatus');
+      if(!el) return;
+      el.innerText = text;
+      if(isError){ el.classList.add('sync-error'); } else { el.classList.remove('sync-error'); }
+    }
+
+    // Fetch with retry across multiple URLs
+    async function fetchWithRetry(urls, tries=3){
+      let lastErr = null;
+      for(const url of urls){
+        for(let attempt=1; attempt<=tries; attempt++){
+          try{
+            const start = Date.now();
+            const res = await fetch(url, { cache: 'no-store' });
+            const ms = Date.now() - start;
+            console.log(`fetch ${url} -> ${res.status} (${ms}ms)`);
+            if(!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            return { data, source: url, ms };
+          } catch(e){
+            lastErr = e;
+            console.warn(`fetch failed ${url} attempt ${attempt}`, e);
+            // exponential-ish backoff
+            await new Promise(r => setTimeout(r, 500 * attempt));
+          }
+        }
+      }
+      throw lastErr;
+    }
 
     function loadTradingViewWidget(symbol) {
       document.getElementById('tv_chart_container').innerHTML = '';
@@ -234,51 +271,68 @@
       }, 10000);
     }
 
-    async function syncMarketPrice() {
+    // Improved sync with fallback and retries
+    async function syncMarketPrice(){
       const btn = document.getElementById('syncBtn');
-      const original = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> مزامنة...';
-      lucide.createIcons();
+      const original = btn ? btn.innerHTML : '';
+      if(btn){ btn.disabled = true; btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> مزامنة...'; lucide.createIcons(); }
+      setSyncStatus('جاري المزامنة...');
 
-      try {
-        let livePrice = null;
-
-        if (currentSymbol.includes('BTC')) {
-          const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
-          const d = await r.json();
-          if (d && d.bitcoin && d.bitcoin.usd) livePrice = d.bitcoin.usd;
-        }
-
-        if (currentSymbol.includes('XAU')) {
-          try {
-            const r = await fetch('https://api.metals.live/v1/spot');
-            const arr = await r.json();
-            const xau = arr.find(item => item && (item.symbol === 'XAU' || item.code === 'XAU')) || arr.find(item => item && item.symbol && item.symbol.toLowerCase().includes('xau'));
-            if (xau && xau.price) livePrice = xau.price;
-          } catch {
-            try {
-              const r = await fetch('https://api.exchangerate.host/convert?from=XAU&to=USD');
-              const d = await r.json();
-              if (d && typeof d.result === 'number') livePrice = d.result;
-            } catch {}
+      try{
+        let result = null;
+        if(currentSymbol.includes('BTC')){
+          // Try CoinGecko then Binance
+          const urls = [
+            'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+            'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT'
+          ];
+          result = await fetchWithRetry(urls, 2);
+          // parse
+          let live = null;
+          if(result.source.includes('coingecko')){
+            live = result.data.bitcoin && result.data.bitcoin.usd ? Number(result.data.bitcoin.usd) : null;
+          } else if(result.source.includes('binance')){
+            // BTCUSDT -> treat as USD approximation
+            live = result.data && result.data.price ? Number(result.data.price) : null;
           }
+          if(!live) throw new Error('لم يستخرج سعر BTC من المصدر');
+          basePrices[currentSymbol] = live;
+          const now = new Date();
+          setSyncStatus(`آخر تحديث: ${now.toUTCString().split(' ')[4]} | مصدر: ${new URL(result.source).hostname}`);
         }
 
-        if (!livePrice || isNaN(Number(livePrice))) {
-          console.warn('Could not fetch live price');
-          return;
+        if(currentSymbol.includes('XAU')){
+          // metals.live primary, exchangerate.host fallback
+          const urls = [
+            'https://api.metals.live/v1/spot',
+            'https://api.exchangerate.host/convert?from=XAU&to=USD'
+          ];
+          result = await fetchWithRetry(urls, 2);
+          let live = null;
+          if(result.source.includes('metals.live')){
+            // result.data is array
+            const arr = result.data;
+            const xau = arr.find(item => item && (item.symbol === 'XAU' || (item.code && item.code === 'XAU'))) || arr.find(item=> item && item.symbol && item.symbol.toLowerCase && item.symbol.toLowerCase().includes('xau'));
+            if(xau && xau.price) live = Number(xau.price);
+          } else if(result.source.includes('exchangerate.host')){
+            live = result.data && typeof result.data.result === 'number' ? Number(result.data.result) : null;
+          }
+          if(!live) throw new Error('لم يستخرج سعر XAU من المصدر');
+          basePrices[currentSymbol] = live;
+          const now = new Date();
+          setSyncStatus(`آخر تحديث: ${now.toUTCString().split(' ')[4]} | مصدر: ${new URL(result.source).hostname}`);
         }
 
-        basePrices[currentSymbol] = Number(livePrice);
         reanalyzeMarket(true);
-        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> تم التزامن';
-        setTimeout(() => { btn.innerHTML = original; btn.disabled = false; lucide.createIcons(); }, 1200);
-      } catch (e) {
-        console.error(e);
-        btn.innerHTML = original;
-        btn.disabled = false;
-        lucide.createIcons();
+        if(btn){ btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> تم التزامن'; }
+        setTimeout(()=>{ if(btn){ btn.innerHTML = original; btn.disabled = false; lucide.createIcons(); } }, 1200);
+
+      } catch(e){
+        console.error('syncMarketPrice error', e);
+        setSyncStatus('فشل المزامنة — إعادة المحاولة خلال 3s', true);
+        if(btn){ btn.disabled = false; btn.innerHTML = original; lucide.createIcons(); }
+        // retry once after 3s
+        setTimeout(()=>{ if(navigator.onLine) syncMarketPrice(); }, 3000);
       }
     }
 

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Price Dashboard — BTC & XAU</title>
+  <style>
+    :root{--bg:#0f1724;--card:#111827;--muted:#9CA3AF;--accent:#06b6d4}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#041022 0%,#071226 100%);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .wrap{width:min(980px,96%);padding:24px}
+    h1{margin:0 0 18px;font-size:20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+    .card{background:rgba(255,255,255,0.03);padding:16px;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .symbol{font-size:14px;color:var(--muted)}
+    .price{font-size:28px;margin-top:8px}
+    .time{font-size:12px;color:var(--muted);margin-top:6px}
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:14px}
+    button{background:var(--accent);border:none;padding:8px 12px;border-radius:6px;color:#042027;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Price Dashboard — BTC & XAU</h1>
+    <div class="controls">
+      <button id="refresh">Refresh</button>
+      <div style="color:var(--muted);font-size:13px">Source: local API endpoints (server)</div>
+    </div>
+    <div class="grid">
+      <div class="card" id="btc-card">
+        <div class="symbol">Bitcoin (BTC)</div>
+        <div class="price" id="btc-price">—</div>
+        <div class="time" id="btc-time">—</div>
+      </div>
+      <div class="card" id="xau-card">
+        <div class="symbol">Gold (XAU — USD / troy oz)</div>
+        <div class="price" id="xau-price">—</div>
+        <div class="time" id="xau-time">—</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchPrice(symbol){
+      try{
+        const res = await fetch(`/api/price?symbol=${symbol}`);
+        if(!res.ok) throw new Error(await res.text());
+        return await res.json();
+      }catch(e){
+        return { error: e.message };
+      }
+    }
+
+    async function updateAll(){
+      document.getElementById('btc-price').textContent = '…';
+      document.getElementById('xau-price').textContent = '…';
+
+      const btc = await fetchPrice('BTC');
+      if(btc.error) document.getElementById('btc-price').textContent = 'Error';
+      else{
+        document.getElementById('btc-price').textContent = '$' + Number(btc.price_usd).toLocaleString(undefined,{maximumFractionDigits:2});
+        document.getElementById('btc-time').textContent = btc.updated_at ? new Date(btc.updated_at).toLocaleString() : '';
+      }
+
+      const xau = await fetchPrice('XAU');
+      if(xau.error) document.getElementById('xau-price').textContent = 'Error';
+      else{
+        document.getElementById('xau-price').textContent = '$' + Number(xau.price_usd).toLocaleString(undefined,{maximumFractionDigits:2});
+        document.getElementById('xau-time').textContent = xau.updated_at ? new Date(xau.updated_at).toLocaleString() : '';
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', updateAll);
+    updateAll();
+    setInterval(updateAll, 30_000);
+  </script>
+</body>
+</html>

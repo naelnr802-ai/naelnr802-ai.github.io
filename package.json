@@ -1,0 +1,20 @@
+{
+  "name": "naelnr802-ai.github.io",
+  "version": "0.1.0",
+  "description": "Price dashboard for BTC and XAU with Express API and modern UI",
+  "main": "api/server.js",
+  "scripts": {
+    "start": "node api/server.js",
+    "dev": "nodemon api/server.js"
+  },
+  "author": "naelnr802-ai",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}

@@ -6,34 +6,98 @@ const app = express();
 app.use(cors());
 app.use(express.static('public'));
 
-// Helper: fetch BTC price from CoinGecko
+// Helper: fetch with timeout
+async function fetchWithTimeout(url, opts = {}, timeout = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, { signal: controller.signal, ...opts });
+    clearTimeout(id);
+    return res;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
+}
+
+// BTC via CoinGecko
 async function fetchBTC() {
   const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_last_updated_at=true';
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('CoinGecko fetch failed');
+  const res = await fetchWithTimeout(url);
+  if (!res.ok) throw new Error('CoinGecko fetch failed: ' + res.status);
   const json = await res.json();
   return {
     symbol: 'BTC',
-    price_usd: json.bitcoin.usd,
-    updated_at: json.bitcoin.last_updated_at ? new Date(json.bitcoin.last_updated_at * 1000).toISOString() : null
+    price_usd: Number(json.bitcoin?.usd ?? null),
+    updated_at: json.bitcoin?.last_updated_at ? new Date(json.bitcoin.last_updated_at * 1000).toISOString() : null,
+    source: 'coingecko'
   };
 }
 
-// Helper: fetch Gold (XAU) price from a public gold price endpoint
-// Note: This endpoint is a simple public feed; for production use consider a paid API with SLAs.
+// Robust XAU fetch with multiple fallbacks
 async function fetchXAU() {
-  const url = 'https://data-asg.goldprice.org/dbXRates/USD';
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Gold price fetch failed');
-  const json = await res.json();
-  // The feed returns an object with items[0].xauPrice (per troy ounce USD)
-  const item = Array.isArray(json.items) && json.items[0] ? json.items[0] : null;
-  const price = item && (item.xauPrice || item.goldprice) ? (item.xauPrice || item.goldprice) : null;
-  return {
-    symbol: 'XAU',
-    price_usd: price,
-    updated_at: item && item.updated ? item.updated : null
-  };
+  const sources = [
+    {
+      name: 'goldprice_org',
+      url: 'https://data-asg.goldprice.org/dbXRates/USD',
+      parser: async (res) => {
+        const j = await res.json();
+        // Some responses: { items: [ { xauPrice: 1930.12, updated: '...' } ] }
+        const item = Array.isArray(j?.items) ? j.items[0] : null;
+        const price = item?.xauPrice ?? item?.xauPriceFloat ?? item?.price ?? null;
+        return { price: price ? Number(price) : null, updated_at: item?.updated ?? null };
+      }
+    },
+    {
+      name: 'metals_live',
+      url: 'https://api.metals.live/v1/spot',
+      parser: async (res) => {
+        const j = await res.json();
+        // metals.live returns array [{symbol:'XAU', price:...}, ...]
+        if (!Array.isArray(j)) return { price: null, updated_at: null };
+        const item = j.find(i => i && ((i.symbol && String(i.symbol).toUpperCase().includes('XAU')) || (i.code && i.code === 'XAU')));
+        const price = item?.price ?? null;
+        return { price: price ? Number(price) : null, updated_at: null };
+      }
+    },
+    {
+      name: 'exchangerate_host',
+      url: 'https://api.exchangerate.host/convert?from=XAU&to=USD',
+      parser: async (res) => {
+        const j = await res.json();
+        return { price: (typeof j?.result === 'number') ? Number(j.result) : null, updated_at: j?.date ?? null };
+      }
+    },
+    {
+      name: 'coingecko_gold',
+      url: 'https://api.coingecko.com/api/v3/simple/price?ids=tether-gold,pax-gold&vs_currencies=usd',
+      parser: async (res) => {
+        const j = await res.json();
+        const candidate = j?.['tether-gold']?.usd ?? j?.['pax-gold']?.usd ?? null;
+        return { price: candidate ? Number(candidate) : null, updated_at: null };
+      }
+    }
+  ];
+
+  let lastError = null;
+  for (const s of sources) {
+    try {
+      const res = await fetchWithTimeout(s.url, {}, 7000);
+      if (!res.ok) { lastError = `Source ${s.name} returned ${res.status}`; console.warn(lastError); continue; }
+      const parsed = await s.parser(res);
+      if (parsed && parsed.price && !Number.isNaN(parsed.price)) {
+        return { symbol: 'XAU', price_usd: Number(parsed.price), updated_at: parsed.updated_at ?? null, source: s.name };
+      }
+      lastError = `Source ${s.name} returned no price`;
+      console.warn(lastError);
+    } catch (e) {
+      lastError = `Source ${s.name} failed: ${e.message || e}`;
+      console.warn(lastError);
+      continue;
+    }
+  }
+
+  throw new Error('No XAU price available. Last error: ' + (lastError || 'unknown'));
 }
 
 app.get('/api/price', async (req, res) => {
@@ -49,10 +113,12 @@ app.get('/api/price', async (req, res) => {
       return res.status(400).json({ error: 'Unsupported symbol. Use BTC or XAU' });
     }
   } catch (err) {
-    console.error(err);
-    return res.status(502).json({ error: err.message });
+    console.error('/api/price error', err && err.message ? err.message : err);
+    return res.status(502).json({ error: err.message || String(err) });
   }
 });
+
+app.get('/_health', (req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
